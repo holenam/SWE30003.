@@ -1,5 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { 
   LayoutDashboard, 
   Package, 
@@ -21,13 +23,42 @@ const navigationItems = [
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
-const accountItems = [
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/logout", label: "Logout", icon: LogOut },
-];
-
 export default function Sidebar() {
   const [location] = useLocation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Logout failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      // Clear all cache
+      queryClient.clear();
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+      });
+      window.location.reload();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   return (
     <aside className="w-64 bg-white shadow-lg border-r border-gray-200 fixed h-full z-10">
@@ -69,26 +100,15 @@ export default function Sidebar() {
           </ul>
         </div>
         
-        <div className="mt-8 px-3">
-          <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            Account
-          </h3>
-          <ul className="mt-3 space-y-1">
-            {accountItems.map((item) => {
-              const Icon = item.icon;
-              
-              return (
-                <li key={item.href}>
-                  <Link href={item.href}>
-                    <a className="text-gray-700 hover:bg-gray-50 flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors">
-                      <Icon className="mr-3 h-4 w-4" />
-                      {item.label}
-                    </a>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+        <div className="mt-8 px-3 border-t border-gray-200 pt-4">
+          <button
+            onClick={handleLogout}
+            disabled={logoutMutation.isPending}
+            className="w-full text-gray-700 hover:bg-gray-50 flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          >
+            <LogOut className="mr-3 h-4 w-4" />
+            {logoutMutation.isPending ? "Logging out..." : "Logout"}
+          </button>
         </div>
       </nav>
     </aside>
