@@ -18,7 +18,7 @@ import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 
 const prescriptionSchema = z.object({
-  customerId: z.number().min(1, "Customer is required"),
+  customerId: z.coerce.number().min(1, "Customer is required"),
   prescriptionNumber: z.string().min(1, "Prescription number is required"),
   doctorName: z.string().min(1, "Doctor name is required"),
   issuedDate: z.string().min(1, "Issued date is required"),
@@ -43,7 +43,7 @@ export default function AddPrescriptionModal({ open, onOpenChange }: AddPrescrip
   const form = useForm<PrescriptionFormData>({
     resolver: zodResolver(prescriptionSchema),
     defaultValues: {
-      customerId: 0,
+      customerId: undefined,
       prescriptionNumber: "",
       doctorName: "",
       issuedDate: "",
@@ -103,7 +103,7 @@ export default function AddPrescriptionModal({ open, onOpenChange }: AddPrescrip
             <Label htmlFor="customer">Customer *</Label>
             <Select 
               onValueChange={(value) => form.setValue("customerId", parseInt(value))}
-              value={form.watch("customerId").toString()}
+              value={form.watch("customerId") ? form.watch("customerId").toString() : ""}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select customer" />

@@ -22,11 +22,11 @@ import { queryClient } from "@/lib/queryClient";
 const medicineSchema = z.object({
   name: z.string().min(1, "Medicine name is required"),
   sku: z.string().min(1, "SKU is required"),
-  categoryId: z.number().min(1, "Category is required"),
+  categoryId: z.coerce.number().min(1, "Category is required"),
   description: z.string().optional(),
   dosage: z.string().optional(),
   manufacturer: z.string().optional(),
-  price: z.string().min(0, "Price must be positive"),
+  price: z.string().min(1, "Price is required"),
   requiresPrescription: z.boolean().default(false),
 });
 
@@ -51,7 +51,7 @@ export default function AddMedicineModal({ open, onOpenChange }: AddMedicineModa
     defaultValues: {
       name: "",
       sku: "",
-      categoryId: 0,
+      categoryId: undefined,
       description: "",
       dosage: "",
       manufacturer: "",
@@ -141,7 +141,7 @@ export default function AddMedicineModal({ open, onOpenChange }: AddMedicineModa
                 <Label htmlFor="category">Category *</Label>
                 <Select 
                   onValueChange={(value) => form.setValue("categoryId", parseInt(value))}
-                  value={form.watch("categoryId").toString()}
+                  value={form.watch("categoryId") ? form.watch("categoryId").toString() : ""}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />

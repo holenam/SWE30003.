@@ -2,6 +2,7 @@ import { Search, Bell, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
 
 interface TopBarProps {
   title?: string;
@@ -9,6 +10,24 @@ interface TopBarProps {
 }
 
 export default function TopBar({ title = "Dashboard", subtitle = "Overview of your pharmacy operations" }: TopBarProps) {
+  const { data: user } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: async () => {
+      const response = await fetch("/api/auth/me");
+      if (!response.ok) return null;
+      return response.json();
+    },
+    retry: false,
+  });
+
+  const getUserInitials = (fullName: string) => {
+    const names = fullName.split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return fullName.substring(0, 2).toUpperCase();
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -31,10 +50,12 @@ export default function TopBar({ title = "Dashboard", subtitle = "Overview of yo
           <div className="flex items-center space-x-3">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-blue-600 text-white text-sm font-medium">
-                LC
+                {user ? getUserInitials(user.username) : "LC"}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium text-gray-700">Dr. Le Minh</span>
+            <span className="text-sm font-medium text-gray-700">
+              {user ? user.username : "Loading..."}
+            </span>
           </div>
         </div>
       </div>
