@@ -54,7 +54,7 @@ export default function Reports() {
       color: "bg-green-500",
       stats: [
         { label: "Total Sales", value: sales?.length || 0 },
-        { label: "Today's Revenue", value: stats?.todaysSales || "$0.00" },
+        { label: "Today's Revenue", value: stats?.todaysSales || "$"+stats?.totalRevenue },
       ],
     },
     {
@@ -74,7 +74,7 @@ export default function Reports() {
       color: "bg-orange-500",
       stats: [
         { label: "Total Prescriptions", value: prescriptions?.length || 0 },
-        { label: "Pending Verification", value: prescriptions?.filter((p: any) => p.status === "pending").length || 0 },
+        { label: "Discarded Prescriptions", value: prescriptions?.filter((p: any) => p.status === "discard").length || 0 },
       ],
     },
   ];
@@ -86,8 +86,6 @@ export default function Reports() {
 
   return (
     <div>
-      <TopBar title="Reports" subtitle="Generate comprehensive business reports and analytics" />
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {reportCards.map((report, index) => {
           const Icon = report.icon;

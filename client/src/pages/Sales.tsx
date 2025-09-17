@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import ProcessSaleModal from "@/components/modals/ProcessSaleModal";
 import TopBar from "@/components/layout/TopBar";
@@ -56,6 +56,16 @@ export default function Sales() {
     }
   };
 
+  const handleDeleteSale = async (saleId: number) => {
+
+    try {
+      await api.deleteSale(saleId);
+      window.location.reload(); // OR trigger a query refetch if using React Query
+    } catch (err: any) {
+      alert(err.message || "Failed to delete sale.");
+    }
+  };
+
   const filteredSales = sales?.filter((sale: any) =>
     sale.saleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     getCustomerName(sale.customerId).toLowerCase().includes(searchTerm.toLowerCase())
@@ -64,7 +74,6 @@ export default function Sales() {
   if (isLoading) {
     return (
       <div>
-        <TopBar title="Sales" subtitle="Manage sales transactions and payments" />
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -76,9 +85,7 @@ export default function Sales() {
   }
 
   return (
-    <div>
-      <TopBar title="Sales" subtitle="Manage sales transactions and payments" />
-      
+    <div>     
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -168,8 +175,8 @@ export default function Sales() {
                     </td>
                     <td className="py-4">
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteSale(sale.id)}>
+                          <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
                     </td>

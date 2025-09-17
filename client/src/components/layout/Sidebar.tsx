@@ -1,17 +1,17 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  LayoutDashboard, 
-  Package, 
-  FileText, 
-  Users, 
-  ShoppingCart, 
-  BarChart3, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Package,
+  FileText,
+  Users,
+  ShoppingCart,
+  BarChart3,
   LogOut,
-  Pill
+  Pill,
+  User,
 } from "lucide-react";
 
 const navigationItems = [
@@ -28,18 +28,25 @@ export default function Sidebar() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const { data: user } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) return null;
+      return res.json();
+    },
+    retry: false,
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch("/api/auth/logout", {
         method: "POST",
       });
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
+      if (!response.ok) throw new Error("Logout failed");
       return response.json();
     },
     onSuccess: () => {
-      // Clear all cache
       queryClient.clear();
       toast({
         title: "Logged out",
@@ -60,6 +67,8 @@ export default function Sidebar() {
     logoutMutation.mutate();
   };
 
+  const isAdmin = user?.username === "admin";
+
   return (
     <aside className="w-64 bg-white shadow-lg border-r border-gray-200 fixed h-full z-10">
       <div className="p-6 border-b border-gray-200">
@@ -73,42 +82,56 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-      
+
       <nav className="mt-6">
         <div className="px-3">
           <ul className="space-y-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location === item.href || (item.href === "/dashboard" && location === "/");
-              
-              return (
-                <li key={item.href}>
-                  <Link href={item.href}>
-                    <a className={cn(
-                      "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
-                      isActive 
-                        ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600" 
-                        : "text-gray-700 hover:bg-gray-50"
-                    )}>
-                      <Icon className="mr-3 h-5 w-5" />
-                      {item.label}
-                    </a>
-                  </Link>
-                </li>
-              );
-            })}
+            {navigationItems
+              .filter((item) => {
+                if ((item.href === "/sales" || item.href === "/reports") && !isAdmin) return false;
+                if (user?.role === "customer" && item.href === "/customers") return false;
+                return true;
+              })
+              .map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  location === item.href ||
+                  (item.href === "/dashboard" && location === "/");
+
+                return (
+                  <li key={item.href}>
+                    <Link href={item.href}>
+                      <a
+                        className={cn(
+                          "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                          isActive
+                            ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                            : "text-gray-700 hover:bg-gray-50"
+                        )}
+                      >
+                        <Icon className="mr-3 h-5 w-5" />
+                        {item.label}
+                      </a>
+                    </Link>
+                  </li>
+                );
+              })}
+            <li>
+              <Link href="/profile">
+                <a
+                  className={cn(
+                    "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                    location === "/profile"
+                      ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                      : "text-gray-700 hover:bg-gray-50"
+                  )}
+                >
+                  <User className="mr-3 h-5 w-5" />
+                  Profile
+                </a>
+              </Link>
+            </li>
           </ul>
-        </div>
-        
-        <div className="mt-8 px-3 border-t border-gray-200 pt-4">
-          <button
-            onClick={handleLogout}
-            disabled={logoutMutation.isPending}
-            className="w-full text-gray-700 hover:bg-gray-50 flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-          >
-            <LogOut className="mr-3 h-4 w-4" />
-            {logoutMutation.isPending ? "Logging out..." : "Logout"}
-          </button>
         </div>
       </nav>
     </aside>
